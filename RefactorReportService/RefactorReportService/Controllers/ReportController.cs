@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Npgsql;
+using RefactorReportService.Configuration;
 using RefactorReportService.Domain;
 
 namespace RefactorReportService.Controllers
@@ -8,15 +10,20 @@ namespace RefactorReportService.Controllers
 	[Route("[controller]")]
 	public class ReportController : ControllerBase
 	{
+		private readonly DatabaseConfiguration config;
+		
+		public ReportController(IOptions<DatabaseConfiguration> databaseConfiguration) {
+			config = databaseConfiguration.Value;
+		}
+
 		[HttpGet]
 		[Route("{year}/{month}")]
 		public IActionResult Download(int year, int month)
 		{
 			var actions = new List<(Action<Employee, Report>, Employee)>();
 			var report = new Report() { S = MonthNameGetter.GetName(year, month) };
-			var connString = "Host=192.168.99.100;Username=postgres;Password=1;Database=employee";
 
-			var conn = new NpgsqlConnection(connString);
+			var conn = new NpgsqlConnection(config.Connection);
 			conn.Open();
 			var cmd = new NpgsqlCommand("SELECT d.name from deps d where d.active = true", conn);
 			var reader = cmd.ExecuteReader();
@@ -24,7 +31,7 @@ namespace RefactorReportService.Controllers
 			{
 				List<Employee> emplist = new List<Employee>();
 				var depName = reader.GetString(0);
-				var conn1 = new NpgsqlConnection(connString);
+				var conn1 = new NpgsqlConnection(config.Connection);
 				conn1.Open();
 				var cmd1 = new NpgsqlCommand("SELECT e.name, e.inn, d.name from emps e left join deps d on e.departmentid = d.id", conn1);
 				var reader1 = cmd1.ExecuteReader();
