@@ -7,16 +7,16 @@ EXPOSE 8080
 EXPOSE 8081
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-ARG BUILD_CONFIGURATION=Release
+ARG BUILD_CONFIGURATION=Development
 WORKDIR /src
-COPY ["RefactorReportService/RefactorReportService.csproj", "RefactorReportService/"]
+COPY ["RefactorReportService.csproj", "RefactorReportService/"]
 RUN dotnet restore "./RefactorReportService/RefactorReportService.csproj"
-COPY . .
 WORKDIR "/src/RefactorReportService"
+COPY . .
 RUN dotnet build "./RefactorReportService.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 FROM build AS publish
-ARG BUILD_CONFIGURATION=Release
+ARG BUILD_CONFIGURATION=Development
 RUN dotnet publish "./RefactorReportService.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
